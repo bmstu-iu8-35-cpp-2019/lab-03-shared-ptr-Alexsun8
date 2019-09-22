@@ -9,10 +9,16 @@
 
 class Control {
  private:
-  std::atomic_int counter = 1;
+  std::atomic_int counter;
 
  public:
-  Control() = default;
+  Control() {
+      counter = 1;
+  }
+
+  explicit Control(size_t i){
+      counter = i;
+  }
 
   void increase() { counter++; }
   void decrease() { counter--; }
@@ -21,7 +27,9 @@ class Control {
       counter = i.counter;
   }*/
 
-  size_t cou() { return static_cast<size_t>(counter); }
+  size_t cou() {
+       if(!counter) return 0;
+      return static_cast<size_t>(counter); }
 
   ~Control() = default;
 };
@@ -39,7 +47,7 @@ class SharedPtr {
   }
 
   explicit SharedPtr(T* dat) {
-    control = new Control();
+    control = new Control(1);
     data = dat;
   }
 
@@ -56,15 +64,12 @@ class SharedPtr {
   }
 
   ~SharedPtr() {
-    if (bool()) {
+    if (*this) {
       control->decrease();
-      if (control->cou() == 0) {
+      if (use_count() == 0 && data!=nullptr) {
         delete data;
         delete control;
       }
-
-      data = nullptr;
-      control = nullptr;
     }
   }
 
@@ -94,8 +99,8 @@ class SharedPtr {
   auto get() -> T* { return data; }
 
   void reset() {
-    if (*this) {
-      control->decrease();
+    if (!*this) return;
+    control->decrease();
       if (control->cou() == 0) {
         delete data;
         delete control;
@@ -103,12 +108,18 @@ class SharedPtr {
 
       data = nullptr;
       control = nullptr;
-    }
+
   }
 
   void reset(T* ptr) {
-    reset();
-      control = new Control();
+      if (*this) {
+          control->decrease();
+          if (control->cou() == 0) {
+              delete data;
+              delete control;
+          }
+      }
+      control = new Control(1);
       data = ptr;
   }
 
