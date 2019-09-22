@@ -70,16 +70,16 @@ class SharedPtr {
 
   auto operator=(const SharedPtr& r) -> SharedPtr& {
     reset();
-    data = r.data;
-    control = r.control;
+      control = r.control;
+      data = r.data;
     control->increase();
     return *this;
   }
 
   auto operator=(SharedPtr&& r) noexcept -> SharedPtr& {
     reset();
-    data = r.data;
-    control = r.control;
+      control = r.control;
+      data = r.data;
     control->increase();
     return *this;
   }
@@ -108,8 +108,8 @@ class SharedPtr {
 
   void reset(T* ptr) {
     reset();
-    data = ptr;
-    control = new Control();
+      control = new Control();
+      data = ptr;
   }
 
   void swap(SharedPtr& r) {
