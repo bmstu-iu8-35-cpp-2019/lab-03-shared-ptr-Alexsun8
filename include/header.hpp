@@ -3,27 +3,28 @@
 #ifndef INCLUDE_HEADER_HPP_
 #define INCLUDE_HEADER_HPP_
 
+#include <cstddef>
 #include <atomic>
+#include <utility>
+
 class Control {
 private:
-std::atomic_int counter;
+std::atomic_int counter = 1;
 public:
-Control(){
-    counter = 1;
-}
+Control() = default;
 
-void operator ++(){
+void increase(){
     counter++;
 }
-    void operator --(){
-        counter--;
-    }
+void decrease(){
+    counter--;
+}
 /*
 Control& operator= (Control& i){
     counter = i.counter;
 }*/
 
-std::atomic_int cou(){return counter;}
+size_t cou(){return static_cast<size_t>(counter);}
 
 ~Control() = default;
 };
@@ -40,45 +41,58 @@ public:
     }
 
     explicit SharedPtr(T* dat){
-            data = dat;
-            control = new Control;
+        control = new Control();
+        data = dat;
     }
 
 
     SharedPtr(const SharedPtr& ptr){
         control = ptr.control;
         data = ptr.data;
-        control++;
+        control->increase();
     }
 
-    SharedPtr(SharedPtr&& ptr) {
+    SharedPtr(SharedPtr&& ptr) noexcept {
         control = ptr.control;
         data = ptr.data;
-        control++;
+        control->increase();
     }
 
-    auto opeartor=(const SharedPtr& r) -> SharedPtr&{
+    ~SharedPtr(){
+        if(bool()){
+            control->decrease() ;
+            if(control->cou() == 0){ delete  data;
+                delete  control;}
+
+            data = nullptr;
+            control = nullptr;
+        }
+    }
+
+    auto operator=(const SharedPtr& r) -> SharedPtr&{
         reset();
         data = r.data;
         control = r.control;
-        control++;
+        control->increase();
+        return *this;
     }
 
 
-    auto opeartor=(SharedPtr&& r) -> SharedPtr&{
+    auto operator=(SharedPtr&& r)  noexcept -> SharedPtr&{
             reset();
             data = r.data;
             control = r.control;
-            control++;
+            control->increase();
+            return *this;
     }
 
 // проверяет, указывает ли указатель на объект
-    operator bool() const{
+    explicit operator bool() const{
         return data != nullptr;
     }
 
 auto operator*() const -> T&{
-    return &data;
+    return *data;
 }
 
 auto operator->() const -> T*{
@@ -90,13 +104,14 @@ auto operator->() const -> T*{
     }
 
     void reset(){
-        control-- ;
-
-        if(control->counter == 0){ delete [] data;
-            delete []  control;}
+       if(*this){
+        control->decrease() ;
+        if(control->cou() == 0){ delete  data;
+            delete  control;}
 
         data = nullptr;
         control = nullptr;
+       }
     }
 
     void reset(T* ptr){
@@ -116,7 +131,7 @@ auto operator->() const -> T*{
 // возвращает количество объектов SharedPtr, которые ссылаются на тот же управляемый объект
     auto use_count() const -> size_t{
         if(!control) return 0;
-        return static_cast<size_t>(control.cou());
+        return static_cast<size_t>(control->cou());
     }
 
 };
