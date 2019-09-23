@@ -38,6 +38,6 @@ TEST(SharedPtr, test) {
   EXPECT_EQ(t3.use_count(), 2);
   EXPECT_EQ(t.use_count(), 1);
   EXPECT_EQ(*t2, *temp1);
-  delete temp1;
-  delete temp2;
+  // delete temp1;
+  // delete temp2;
 }

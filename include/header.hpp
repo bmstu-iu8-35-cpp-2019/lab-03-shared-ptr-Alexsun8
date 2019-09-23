@@ -9,16 +9,12 @@
 
 class Control {
  private:
-  std::atomic_int counter;
+  std::atomic_int counter = 0;
 
  public:
-  Control() {
-      counter = 1;
-  }
+  Control() { counter = 1; }
 
-  explicit Control(size_t i){
-      counter = i;
-  }
+  explicit Control(size_t i) { counter = i; }
 
   void increase() { counter++; }
   void decrease() { counter--; }
@@ -28,8 +24,9 @@ class Control {
   }*/
 
   size_t cou() {
-       if(!counter) return 0;
-      return static_cast<size_t>(counter); }
+    if (!counter) return 0;
+    return static_cast<size_t>(counter);
+  }
 
   ~Control() = default;
 };
@@ -66,7 +63,7 @@ class SharedPtr {
   ~SharedPtr() {
     if (*this) {
       control->decrease();
-      if (use_count() == 0 && data!=nullptr) {
+      if (control->cou() == 0) {
         delete data;
         delete control;
       }
@@ -75,16 +72,16 @@ class SharedPtr {
 
   auto operator=(const SharedPtr& r) -> SharedPtr& {
     reset();
-      control = r.control;
-      data = r.data;
+    control = r.control;
+    data = r.data;
     control->increase();
     return *this;
   }
 
   auto operator=(SharedPtr&& r) noexcept -> SharedPtr& {
     reset();
-      control = r.control;
-      data = r.data;
+    control = r.control;
+    data = r.data;
     control->increase();
     return *this;
   }
@@ -101,26 +98,25 @@ class SharedPtr {
   void reset() {
     if (!*this) return;
     control->decrease();
+    if (control->cou() == 0) {
+      delete data;
+      delete control;
+    }
+
+    data = nullptr;
+    control = nullptr;
+  }
+
+  void reset(T* ptr) {
+    if (*this) {
+      control->decrease();
       if (control->cou() == 0) {
         delete data;
         delete control;
       }
-
-      data = nullptr;
-      control = nullptr;
-
-  }
-
-  void reset(T* ptr) {
-      if (*this) {
-          control->decrease();
-          if (control->cou() == 0) {
-              delete data;
-              delete control;
-          }
-      }
-      control = new Control(1);
-      data = ptr;
+    }
+    control = new Control(1);
+    data = ptr;
   }
 
   void swap(SharedPtr& r) {
