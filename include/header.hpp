@@ -120,10 +120,11 @@ class SharedPtr {
   }
 
   void swap(SharedPtr& r) {
-    SharedPtr temp(r);
-    r = *this;
-    *this = temp;
-    temp.reset();
+    //    SharedPtr temp(r);
+    std::swap(r, *this);
+    //    r = *this;
+    //    *this = temp;
+    //    temp.reset();
   }
 
   // возвращает количество объектов SharedPtr, которые ссылаются на тот же
